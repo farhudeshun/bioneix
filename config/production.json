@@ -1,0 +1,5 @@
+{
+    "mongoURI": "mongodb://production_mongo_uri_here",
+    "jwt_key": ""
+  }
+  

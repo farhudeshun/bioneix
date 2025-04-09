@@ -1,0 +1,5 @@
+{
+    "mongoURI": "MONGO_URI",
+    "jwt_key": "JWT_KEY"
+  }
+  
