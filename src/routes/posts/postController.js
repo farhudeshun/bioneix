@@ -34,15 +34,42 @@ module.exports = {
       const { page = 1, limit = 10 } = req.query;
       const skip = (page - 1) * limit;
 
-      const posts = await Post.find({})
-        .sort({ order: 1 })
-        .skip(skip)
-        .limit(parseInt(limit));
+      const allPosts = await Post.find({}).lean();
 
-      const totalPosts = await Post.countDocuments();
+      const orderedMap = new Map();
+      const unordered = [];
+
+      for (const post of allPosts) {
+        if (
+          post.order !== null &&
+          post.order !== undefined &&
+          Number.isInteger(post.order) &&
+          post.order > 0
+        ) {
+          orderedMap.set(post.order - 1, post);
+        } else {
+          unordered.push(post);
+        }
+      }
+
+      unordered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+      const combined = [];
+      let unorderedIndex = 0;
+
+      for (let i = 0; i < allPosts.length; i++) {
+        if (orderedMap.has(i)) {
+          combined.push(orderedMap.get(i));
+        } else if (unorderedIndex < unordered.length) {
+          combined.push(unordered[unorderedIndex++]);
+        }
+      }
+
+      const paginated = combined.slice(skip, skip + parseInt(limit));
+      const totalPosts = combined.length;
 
       return res.status(200).json({
-        posts,
+        posts: paginated,
         pagination: {
           totalPosts,
           totalPages: Math.ceil(totalPosts / limit),
