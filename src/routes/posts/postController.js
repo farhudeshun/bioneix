@@ -145,23 +145,33 @@ module.exports = {
   async deletePost(req, res) {
     try {
       const { id } = req.params;
+
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: "Invalid post ID format" });
+        return res.status(400).json({
+          status: "fail",
+          message: "Invalid post ID format",
+        });
       }
 
-      const post = await Post.findById(id);
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
+      const deletedPost = await Post.findByIdAndDelete(id);
+
+      if (!deletedPost) {
+        return res.status(404).json({
+          status: "fail",
+          message: "No post found with that ID",
+        });
       }
 
-      await post.remove();
-
-      return res.status(204).json({ message: "Post deleted successfully" });
+      return res.status(204).end();
     } catch (error) {
-      console.error("Error deleting post:", error);
-      return res
-        .status(500)
-        .json({ message: "Error deleting post", error: error.message });
+      console.error("[DELETE POST ERROR]", error);
+
+      return res.status(500).json({
+        status: "error",
+        message: "Failed to delete post",
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
+      });
     }
   },
 };
